@@ -42,3 +42,5 @@ and uploads `trades.csv`, `summary.json`, and `REPORT.md` as an artifact.
 See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) for assumptions and bias controls.
 The completed baseline findings are in
 [docs/BASELINE_RESULTS.md](docs/BASELINE_RESULTS.md).
+The bullish-and-bearish v2 findings are in
+[docs/V2_RESULTS.md](docs/V2_RESULTS.md).
