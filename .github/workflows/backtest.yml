@@ -47,7 +47,7 @@ jobs:
           done
       - name: Validate frozen baseline
         run: |
-          pytest -q
+          python -m pytest -q
           python - <<'PY'
           import json
           c=json.load(open("config.json"))
