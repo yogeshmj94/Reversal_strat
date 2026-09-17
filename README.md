@@ -38,3 +38,5 @@ The GitHub Actions workflow downloads and caches the M1 data, runs the test,
 and uploads `trades.csv`, `summary.json`, and `REPORT.md` as an artifact.
 
 See [docs/METHODOLOGY.md](docs/METHODOLOGY.md) for assumptions and bias controls.
+The completed baseline findings are in
+[docs/BASELINE_RESULTS.md](docs/BASELINE_RESULTS.md).
