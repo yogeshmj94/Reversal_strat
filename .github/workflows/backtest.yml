@@ -1,0 +1,67 @@
+name: Backtest H4 hammer reversal
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: pip install -r requirements.txt
+      - name: Restore M1 bid-data cache
+        id: cache-data
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: reversal-m1-2023-09-15-2025-09-15-v1
+      - name: Download M1 bid data
+        if: steps.cache-data.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p data raw
+          FROM="2023-09-15"
+          TO="2025-09-15"
+          PAIRS="EURUSD GBPUSD USDJPY USDCHF USDCAD AUDUSD NZDUSD EURGBP EURJPY GBPJPY EURCHF AUDJPY CADJPY CHFJPY EURNZD EURAUD GBPAUD GBPCAD GBPNZD AUDCAD"
+          for P in $PAIRS; do
+            echo "Downloading $P..."
+            rm -rf raw/*
+            npx -y dukascopy-node@1.50.0 -i "${P,,}" -from "$FROM" -to "$TO" -t m1 -p bid -f csv -dir raw -fn "$P" -bs 5 -bp 1500
+            SRC="$(find raw -type f -iname '*.csv' | head -n 1 || true)"
+            test -n "$SRC" || { echo "::error::No CSV produced for $P"; exit 1; }
+            cp "$SRC" "data/$P.csv"
+            test -s "data/$P.csv"
+          done
+      - name: Validate frozen baseline
+        run: |
+          pytest -q
+          python - <<'PY'
+          import json
+          c=json.load(open("config.json"))
+          assert c["minimum_bearish_candles"] == 2
+          assert c["minimum_lower_wick_to_body"] == 2.0
+          assert c["stop_buffer_pips"] == 0.0
+          assert c["targets_r"] == [2.0, 3.0]
+          assert len(c["pairs"]) == 20
+          print("Frozen baseline verified")
+          PY
+          test "$(find data -maxdepth 1 -type f -name '*.csv' | wc -l)" -eq 20
+      - name: Run baseline backtest
+        run: python -m src.backtest --data-dir data --out-dir results/baseline
+      - name: Publish job summary
+        run: cat results/baseline/REPORT.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload complete results
+        uses: actions/upload-artifact@v4
+        with:
+          name: h4-hammer-reversal-baseline-2023-09-15_2025-09-15
+          path: results/baseline/
+          retention-days: 30

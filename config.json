@@ -1,0 +1,16 @@
+{
+  "date_from": "2023-09-15",
+  "date_to": "2025-09-15",
+  "pairs": [
+    "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "USDCAD",
+    "AUDUSD", "NZDUSD", "EURGBP", "EURJPY", "GBPJPY",
+    "EURCHF", "AUDJPY", "CADJPY", "CHFJPY", "EURNZD",
+    "EURAUD", "GBPAUD", "GBPCAD", "GBPNZD", "AUDCAD"
+  ],
+  "minimum_bearish_candles": 2,
+  "minimum_lower_wick_to_body": 2.0,
+  "maximum_upper_wick_to_body": 1.0,
+  "maximum_body_to_range": 0.3333333333,
+  "stop_buffer_pips": 0.0,
+  "targets_r": [2.0, 3.0]
+}
