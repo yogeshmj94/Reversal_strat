@@ -28,11 +28,11 @@ def summarize(group: pd.DataFrame) -> dict:
 
 
 def build_summary(trades: pd.DataFrame) -> dict:
-    result = {"overall": summarize(trades), "by_target": {}, "by_color_and_target": {}, "by_pair": {}}
+    result = {"overall": summarize(trades), "by_target": {}, "by_direction_color_target": {}, "by_pair": {}}
     for target, group in trades.groupby("target_r"):
         result["by_target"][f"{target:g}R"] = summarize(group)
-    for (color, target), group in trades.groupby(["hammer_color", "target_r"]):
-        result["by_color_and_target"][f"{color}_{target:g}R"] = summarize(group)
-    for (symbol, color, target), group in trades.groupby(["symbol", "hammer_color", "target_r"]):
-        result["by_pair"][f"{symbol}_{color}_{target:g}R"] = summarize(group)
+    for (direction, color, target), group in trades.groupby(["setup_direction", "hammer_color", "target_r"]):
+        result["by_direction_color_target"][f"{direction}_{color}_{target:g}R"] = summarize(group)
+    for (symbol, direction, color, target), group in trades.groupby(["symbol", "setup_direction", "hammer_color", "target_r"]):
+        result["by_pair"][f"{symbol}_{direction}_{color}_{target:g}R"] = summarize(group)
     return result

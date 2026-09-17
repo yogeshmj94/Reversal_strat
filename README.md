@@ -4,24 +4,26 @@ Reproducible forex backtest for a bullish H4 hammer after at least two
 consecutive bearish H4 candles. The same signals are evaluated independently
 at fixed 2R and 3R targets, with green and red hammers reported separately.
 
-## Frozen baseline rule
+## Current v2 rule
 
 - Signal timeframe: H4 (UTC-aligned candles).
-- Context: the candles immediately preceding the hammer include at least two
-  consecutive bearish candles (`close < open`).
-- Hammer: lower wick is at least 2x the real body, upper wick is no larger
-  than the real body, and the body is no more than one-third of the full range.
-- Direction: both green (`close >= open`) and red (`close < open`) hammers qualify.
+- Bullish context: at least two immediately consecutive bearish H4 candles.
+- Bullish red signal: open equals high; close is no more than 30% of the candle
+  range below the high, leaving a lower wick of at least 70%.
+- Bullish green signal: open is no more than 30% of the range below the high;
+  close equals the high or is no more than 2% of the range below it.
+- Bearish signals mirror those definitions vertically after at least two
+  immediately consecutive bullish H4 candles.
 - Entry: hammer close, after the H4 candle has completed.
-- Stop: hammer low (no buffer in the baseline).
+- Stop: one pip beyond the signal low for bullish setups and one pip beyond the
+  signal high for bearish setups.
 - Targets: entry + 2x risk and entry + 3x risk, evaluated separately.
 - Execution: future M1 bid candles; if SL and TP occur in the same M1 candle,
   the conservative result is SL.
 - Sample: 20 liquid forex pairs, 2023-09-15 through 2025-09-15.
 
-The thresholds are intentionally explicit and configurable in `config.json`.
-They are a testable mathematical approximation of the visual hammer in the
-reference image, not a claim that every trader draws a hammer identically.
+The thresholds are intentionally explicit, range-normalized, and configurable
+in `config.json`.
 
 ## Run locally
 

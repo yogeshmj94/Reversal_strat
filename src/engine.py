@@ -28,6 +28,7 @@ def to_h4(m1: pd.DataFrame) -> pd.DataFrame:
 @dataclass(frozen=True)
 class Signal:
     symbol: str
+    setup_direction: str
     hammer_start: pd.Timestamp
     entry_time: pd.Timestamp
     hammer_color: str
@@ -48,22 +49,29 @@ class Signal:
         return asdict(self)
 
 
-def is_hammer(row: pd.Series, cfg: dict) -> bool:
+def is_reversal_candle(row: pd.Series, direction: str, cfg: dict) -> bool:
+    """Apply the user-defined, range-normalized hammer/shooting-star geometry."""
     candle_range = float(row.high - row.low)
-    if candle_range <= 0:
+    if candle_range <= 0 or row.close == row.open:
         return False
-    body = abs(float(row.close - row.open))
-    # A zero-body doji has undefined wick/body ratios and is not classified as
-    # red or green for this experiment.
-    if body <= 0:
-        return False
-    lower_wick = float(min(row.open, row.close) - row.low)
-    upper_wick = float(row.high - max(row.open, row.close))
-    return (
-        lower_wick >= cfg["minimum_lower_wick_to_body"] * body
-        and upper_wick <= cfg["maximum_upper_wick_to_body"] * body
-        and body / candle_range <= cfg["maximum_body_to_range"]
-    )
+    zone = cfg["maximum_body_zone_of_range"] * candle_range
+    close_gap = cfg["maximum_close_gap_from_extreme"] * candle_range
+    eps = max(candle_range * 1e-9, 1e-12)
+    green = row.close > row.open
+    if direction == "bullish":
+        if green:
+            return row.high - row.open <= zone + eps and row.high - row.close <= close_gap + eps
+        return abs(row.high - row.open) <= eps and row.high - row.close <= zone + eps
+    if direction == "bearish":
+        if green:
+            return abs(row.open - row.low) <= eps and row.close - row.low <= zone + eps
+        return row.open - row.low <= zone + eps and row.close - row.low <= close_gap + eps
+    raise ValueError(f"Unknown direction: {direction}")
+
+
+def is_hammer(row: pd.Series, cfg: dict) -> bool:
+    """Backward-compatible alias for the bullish pattern."""
+    return is_reversal_candle(row, "bullish", cfg)
 
 
 def find_signals(symbol: str, h4: pd.DataFrame, cfg: dict) -> list[Signal]:
@@ -71,29 +79,34 @@ def find_signals(symbol: str, h4: pd.DataFrame, cfg: dict) -> list[Signal]:
     minimum = int(cfg["minimum_bearish_candles"])
     buffer = float(cfg["stop_buffer_pips"]) * pip_size(symbol)
     for i in range(minimum, len(h4)):
-        hammer = h4.iloc[i]
-        if not is_hammer(hammer, cfg):
+      hammer = h4.iloc[i]
+      for direction in ("bullish", "bearish"):
+        if not is_reversal_candle(hammer, direction, cfg):
             continue
-        bearish_count = 0
+        context_count = 0
         j = i - 1
-        while j >= 0 and h4.iloc[j].close < h4.iloc[j].open:
-            bearish_count += 1
+        while j >= 0:
+            prior = h4.iloc[j]
+            required = prior.close < prior.open if direction == "bullish" else prior.close > prior.open
+            if not required:
+                break
+            context_count += 1
             j -= 1
-        if bearish_count < minimum:
+        if context_count < minimum:
             continue
         entry = float(hammer.close)
-        stop = float(hammer.low) - buffer
-        risk = entry - stop
+        stop = float(hammer.low) - buffer if direction == "bullish" else float(hammer.high) + buffer
+        risk = abs(entry - stop)
         if risk <= 0:
             continue
         start = h4.index[i]
         signals.append(
             Signal(
-                symbol=symbol,
+                symbol=symbol, setup_direction=direction,
                 hammer_start=start,
                 entry_time=start + pd.Timedelta(hours=4),
                 hammer_color="green" if hammer.close >= hammer.open else "red",
-                preceding_bearish_count=bearish_count,
+                preceding_bearish_count=context_count,
                 open=float(hammer.open), high=float(hammer.high),
                 low=float(hammer.low), close=float(hammer.close),
                 body=abs(float(hammer.close - hammer.open)),
@@ -108,13 +121,17 @@ def find_signals(symbol: str, h4: pd.DataFrame, cfg: dict) -> list[Signal]:
 
 def simulate(signal: Signal, m1: pd.DataFrame, target_r: float) -> dict:
     """Resolve one signal on future M1 bars with conservative ambiguous bars."""
-    target = signal.entry + target_r * signal.risk
+    target = signal.entry + target_r * signal.risk if signal.setup_direction == "bullish" else signal.entry - target_r * signal.risk
     # searchsorted avoids building a million-row boolean mask for every signal.
     start = int(m1["timestamp"].searchsorted(signal.entry_time, side="left"))
     future = m1.iloc[start:]
     for bar in future.itertuples(index=False):
-        sl_hit = float(bar.low) <= signal.stop
-        tp_hit = float(bar.high) >= target
+        if signal.setup_direction == "bullish":
+            sl_hit = float(bar.low) <= signal.stop
+            tp_hit = float(bar.high) >= target
+        else:
+            sl_hit = float(bar.high) >= signal.stop
+            tp_hit = float(bar.low) <= target
         if sl_hit:
             return {
                 "target_r": target_r, "target": target, "outcome": "SL",

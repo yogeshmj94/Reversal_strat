@@ -1,24 +1,21 @@
 # Methodology and decision log
 
-## Research question
+## Current v2 research question
 
-After at least two immediately consecutive bearish H4 candles, does a bullish
-hammer reversal have positive expectancy when entered at its close with the
-hammer low as stop? Do green and red hammers behave differently, and is 2R or
-3R the better fixed target?
+Do the user-defined bullish and mirrored bearish reversal candles have positive
+expectancy after at least two opposite-colour H4 context candles? How do signal
+direction, candle colour, and fixed 2R versus 3R targets compare?
 
-## Why the hammer is quantified this way
+## Signal geometry
 
-The reference image conveys a small body near the candle high and a long lower
-tail. For reproducibility, the baseline requires:
+All percentages use the signal candle's high-low range.
 
-1. lower wick >= 2 real bodies;
-2. upper wick <= 1 real body; and
-3. real body <= one-third of the full high-low range.
+For a bullish red candle, open must equal high and close must be within the top
+30% of the range. For a bullish green candle, open must be within the top 30%
+and close within the top 2%. The bearish definitions are exact vertical mirrors.
 
-Both red and green bodies qualify. A zero-body doji is excluded because it
-cannot be assigned to the requested red/green comparison and wick/body ratios
-would be undefined.
+A zero-body doji is excluded because it cannot be assigned to the requested
+red/green comparison. Stops are one pip beyond the signal extreme.
 
 ## Timeline and look-ahead control
 

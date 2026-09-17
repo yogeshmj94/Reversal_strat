@@ -49,7 +49,7 @@ def main() -> None:
     trades.to_csv(out / "trades.csv", index=False)
     (out / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
     (out / "REPORT.md").write_text(render(summary, cfg))
-    print(json.dumps(summary["by_color_and_target"], indent=2))
+    print(json.dumps(summary["by_direction_color_target"], indent=2))
 
 
 if __name__ == "__main__":

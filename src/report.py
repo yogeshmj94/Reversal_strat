@@ -9,10 +9,10 @@ def _table(entries: dict) -> list[str]:
 
 
 def render(summary: dict, cfg: dict) -> str:
-    cohorts = summary["by_color_and_target"]
+    cohorts = summary["by_direction_color_target"]
     lines = [
-        "# H4 Hammer Reversal — Baseline Results", "",
-        f"Sample: {cfg['date_from']} to {cfg['date_to']}, {len(cfg['pairs'])} forex pairs. Entry at hammer close; stop at hammer low; future M1 execution.", "",
+        "# H4 Reversal Candle — Results", "",
+        f"Sample: {cfg['date_from']} to {cfg['date_to']}, {len(cfg['pairs'])} forex pairs. Entry at signal close; stop one pip beyond the signal extreme; future M1 execution.", "",
         "## Primary comparison", "", *_table(cohorts), "",
         "Break-even win rates before spread, slippage, and commission are 33.33% at 2R and 25.00% at 3R.", "",
         "## Reading the result", "",
