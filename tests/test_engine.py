@@ -8,6 +8,8 @@ CFG = {
     "maximum_body_zone_of_range": 0.30,
     "maximum_close_gap_from_extreme": 0.02,
     "stop_buffer_pips": 1.0,
+    "trend_lookback_h4_bars": [],
+    "minimum_trend_votes": 0,
 }
 
 
@@ -57,3 +59,20 @@ def test_simulation_never_uses_hammer_candle_and_sl_wins_tie():
     assert result["outcome"] == "SL"
     assert result["ambiguous_bar"] is True
     assert result["exit_time"] == idx[1]
+
+
+def test_majority_trend_filter_accepts_aligned_signal_and_rejects_opposite():
+    idx = pd.date_range("2025-01-01", periods=6, freq="4h", tz="UTC")
+    h4 = pd.DataFrame([
+        (95, 96, 94, 95),
+        (96, 97, 95, 96),
+        (97, 98, 96, 97),
+        (101, 102, 99, 100),
+        (100, 101, 97, 98),
+        (99, 99, 93, 98.9),
+    ], columns=["open", "high", "low", "close"], index=idx)
+    cfg = {**CFG, "trend_lookback_h4_bars": [3, 4, 5], "minimum_trend_votes": 2}
+    signals = find_signals("EURUSD", h4, cfg)
+    assert len(signals) == 1
+    assert signals[0].setup_direction == "bullish"
+    assert signals[0].trend_votes == 3

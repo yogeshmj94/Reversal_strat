@@ -1,10 +1,16 @@
 # Methodology and decision log
 
-## Current v2 research question
+## Current v3 research question
 
 Do the user-defined bullish and mirrored bearish reversal candles have positive
 expectancy after at least two opposite-colour H4 context candles? How do signal
 direction, candle colour, and fixed 2R versus 3R targets compare?
+
+V3 additionally requires H4 time-series momentum to agree with the proposed
+trade. Returns over 180, 540 and 1,080 completed H4 bars approximate one, three
+and six trading months. At least two lookbacks must be positive for a bullish
+entry or negative for a bearish entry. The periods and voting threshold are
+frozen before inspecting results.
 
 ## Signal geometry
 

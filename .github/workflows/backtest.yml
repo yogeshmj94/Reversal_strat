@@ -55,6 +55,8 @@ jobs:
           assert c["maximum_body_zone_of_range"] == 0.30
           assert c["maximum_close_gap_from_extreme"] == 0.02
           assert c["stop_buffer_pips"] == 1.0
+          assert c["trend_lookback_h4_bars"] == [180, 540, 1080]
+          assert c["minimum_trend_votes"] == 2
           assert c["targets_r"] == [2.0, 3.0]
           assert len(c["pairs"]) == 20
           print("Frozen baseline verified")
@@ -67,6 +69,6 @@ jobs:
       - name: Upload complete results
         uses: actions/upload-artifact@v4
         with:
-          name: h4-bullish-bearish-reversal-v2-2023-09-15_2025-09-15
+          name: h4-trend-plus-reversal-v3-2023-09-15_2025-09-15
           path: results/baseline/
           retention-days: 30

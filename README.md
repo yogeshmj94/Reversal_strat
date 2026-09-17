@@ -4,7 +4,7 @@ Reproducible forex backtest for a bullish H4 hammer after at least two
 consecutive bearish H4 candles. The same signals are evaluated independently
 at fixed 2R and 3R targets, with green and red hammers reported separately.
 
-## Current v2 rule
+## Current v3 rule
 
 - Signal timeframe: H4 (UTC-aligned candles).
 - Bullish context: at least two immediately consecutive bearish H4 candles.
@@ -14,6 +14,9 @@ at fixed 2R and 3R targets, with green and red hammers reported separately.
   close equals the high or is no more than 2% of the range below it.
 - Bearish signals mirror those definitions vertically after at least two
   immediately consecutive bullish H4 candles.
+- Trend filter: approximately 1-, 3- and 6-month returns measured over 180,
+  540 and 1,080 completed H4 candles. At least two of three lookbacks must agree
+  with the reversal direction.
 - Entry: hammer close, after the H4 candle has completed.
 - Stop: one pip beyond the signal low for bullish setups and one pip beyond the
   signal high for bearish setups.

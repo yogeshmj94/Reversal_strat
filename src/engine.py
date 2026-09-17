@@ -29,6 +29,8 @@ def to_h4(m1: pd.DataFrame) -> pd.DataFrame:
 class Signal:
     symbol: str
     setup_direction: str
+    trend_votes: int
+    trend_lookback_returns: str
     hammer_start: pd.Timestamp
     entry_time: pd.Timestamp
     hammer_color: str
@@ -77,8 +79,11 @@ def is_hammer(row: pd.Series, cfg: dict) -> bool:
 def find_signals(symbol: str, h4: pd.DataFrame, cfg: dict) -> list[Signal]:
     signals: list[Signal] = []
     minimum = int(cfg["minimum_bearish_candles"])
+    trend_lookbacks = [int(x) for x in cfg.get("trend_lookback_h4_bars", [])]
+    minimum_votes = int(cfg.get("minimum_trend_votes", 0))
+    longest_lookback = max(trend_lookbacks, default=0)
     buffer = float(cfg["stop_buffer_pips"]) * pip_size(symbol)
-    for i in range(minimum, len(h4)):
+    for i in range(max(minimum, longest_lookback), len(h4)):
       hammer = h4.iloc[i]
       for direction in ("bullish", "bearish"):
         if not is_reversal_candle(hammer, direction, cfg):
@@ -94,6 +99,10 @@ def find_signals(symbol: str, h4: pd.DataFrame, cfg: dict) -> list[Signal]:
             j -= 1
         if context_count < minimum:
             continue
+        returns = [float(hammer.close / h4.iloc[i - lookback].close - 1.0) for lookback in trend_lookbacks]
+        votes = sum(r > 0 for r in returns) if direction == "bullish" else sum(r < 0 for r in returns)
+        if votes < minimum_votes:
+            continue
         entry = float(hammer.close)
         stop = float(hammer.low) - buffer if direction == "bullish" else float(hammer.high) + buffer
         risk = abs(entry - stop)
@@ -102,7 +111,8 @@ def find_signals(symbol: str, h4: pd.DataFrame, cfg: dict) -> list[Signal]:
         start = h4.index[i]
         signals.append(
             Signal(
-                symbol=symbol, setup_direction=direction,
+                symbol=symbol, setup_direction=direction, trend_votes=votes,
+                trend_lookback_returns="|".join(f"{r:.8f}" for r in returns),
                 hammer_start=start,
                 entry_time=start + pd.Timedelta(hours=4),
                 hammer_color="green" if hammer.close >= hammer.open else "red",

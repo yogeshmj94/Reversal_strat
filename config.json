@@ -11,5 +11,7 @@
   "maximum_body_zone_of_range": 0.30,
   "maximum_close_gap_from_extreme": 0.02,
   "stop_buffer_pips": 1.0,
+  "trend_lookback_h4_bars": [180, 540, 1080],
+  "minimum_trend_votes": 2,
   "targets_r": [2.0, 3.0]
 }
